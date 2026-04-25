@@ -31,7 +31,17 @@ jobs:
       - name: Install host tools
         run: |
           sudo apt update
-          sudo apt install -y curl unzip make git clang llvm lld tar xxd zip pkg-config autoconf automake libtool bzip2 xz-utils bpftool
+          sudo apt install -y curl unzip make git clang llvm lld tar xxd zip pkg-config autoconf automake libtool bzip2 xz-utils linux-tools-common linux-tools-generic
+          BPFTOOL_PATH="$(command -v bpftool || true)"
+          if [ -z "$BPFTOOL_PATH" ]; then
+            BPFTOOL_PATH="$(find /usr/lib/linux-tools-* -type f -name bpftool 2>/dev/null | sort -V | tail -n 1)"
+          fi
+          if [ -z "$BPFTOOL_PATH" ]; then
+            echo "bpftool not found after installing linux-tools" >&2
+            exit 1
+          fi
+          echo "BPFTOOL=$BPFTOOL_PATH" >> "$GITHUB_ENV"
+          "$BPFTOOL_PATH" version
 
       - name: Cache Android arm64 dependencies
         uses: actions/cache@v4
